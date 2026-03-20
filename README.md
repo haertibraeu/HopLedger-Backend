@@ -103,3 +103,37 @@ docker compose up -d db
 | `POST` | `/api/container-types` | Create container type |
 | `PUT` | `/api/container-types/:id` | Update container type |
 | `DELETE` | `/api/container-types/:id` | Delete container type |
+
+### Containers (Inventory)
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/containers` | List (filter: `?locationId=&beerId=&isEmpty=&isReserved=`) |
+| `GET` | `/api/containers/:id` | Get container by ID |
+| `POST` | `/api/containers` | Create container |
+| `DELETE` | `/api/containers/:id` | Delete container |
+| `POST` | `/api/containers/:id/move` | Move to new location |
+| `POST` | `/api/containers/:id/fill` | Fill with beer |
+| `POST` | `/api/containers/:id/destroy-beer` | Mark as empty (beer went bad) |
+| `POST` | `/api/containers/:id/reserve` | Reserve for customer |
+| `POST` | `/api/containers/:id/unreserve` | Remove reservation |
+| `POST` | `/api/containers/batch-fill` | Fill multiple containers at once |
+
+### Accounting
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/accounting/balances` | Net balance per brewer |
+| `GET` | `/api/accounting/entries` | List entries (filter: `?brewerId=&page=&limit=`) |
+| `POST` | `/api/accounting/entries` | Create manual entry |
+| `GET` | `/api/accounting/settlements` | Settlement suggestions |
+
+### Combined Actions
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/api/actions/sell` | Sell container to customer |
+| `POST` | `/api/actions/self-consume` | Brewer self-consumes container |
+| `POST` | `/api/actions/container-return` | Customer returns container |
+
+### Public (no auth)
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/public/inventory` | Available inventory (for website) |

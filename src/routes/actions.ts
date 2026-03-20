@@ -1,0 +1,168 @@
+import { Router, Request, Response } from "express";
+import { prisma } from "../utils/prisma";
+
+export const actionsRouter = Router();
+
+// Sell: move container to customer + credit brewer
+actionsRouter.post("/sell", async (req: Request, res: Response) => {
+  const { containerId, brewerId, customerLocationId } = req.body;
+
+  if (!containerId || !brewerId || !customerLocationId) {
+    res.status(400).json({
+      error: "containerId, brewerId, and customerLocationId are required",
+    });
+    return;
+  }
+
+  const [container, brewer, location] = await Promise.all([
+    prisma.container.findUnique({
+      where: { id: containerId },
+      include: { containerType: true },
+    }),
+    prisma.brewer.findUnique({ where: { id: brewerId } }),
+    prisma.location.findUnique({ where: { id: customerLocationId } }),
+  ]);
+
+  if (!container) { res.status(404).json({ error: "Container not found" }); return; }
+  if (!brewer) { res.status(404).json({ error: "Brewer not found" }); return; }
+  if (!location) { res.status(404).json({ error: "Customer location not found" }); return; }
+  if (container.isEmpty) {
+    res.status(422).json({ error: "Cannot sell an empty container" });
+    return;
+  }
+
+  const amount = container.containerType.externalPrice + container.containerType.depositFee;
+
+  const result = await prisma.$transaction(async (tx) => {
+    const updated = await tx.container.update({
+      where: { id: containerId },
+      data: {
+        locationId: customerLocationId,
+        isReserved: false,
+        reservedFor: null,
+      },
+      include: { containerType: true, beer: true, location: true },
+    });
+
+    const entry = await tx.accountEntry.create({
+      data: {
+        brewerId,
+        amount,
+        type: "sale",
+        description: `Sold ${container.containerType.name} to customer`,
+      },
+    });
+
+    return { container: updated, accountEntry: entry };
+  });
+
+  res.json(result);
+});
+
+// Self-Consume: empty container + debit brewer
+actionsRouter.post("/self-consume", async (req: Request, res: Response) => {
+  const { containerId, brewerId } = req.body;
+
+  if (!containerId || !brewerId) {
+    res.status(400).json({ error: "containerId and brewerId are required" });
+    return;
+  }
+
+  const [container, brewer] = await Promise.all([
+    prisma.container.findUnique({
+      where: { id: containerId },
+      include: { containerType: true, beer: true },
+    }),
+    prisma.brewer.findUnique({ where: { id: brewerId } }),
+  ]);
+
+  if (!container) { res.status(404).json({ error: "Container not found" }); return; }
+  if (!brewer) { res.status(404).json({ error: "Brewer not found" }); return; }
+  if (container.isEmpty) {
+    res.status(422).json({ error: "Container is already empty" });
+    return;
+  }
+
+  const amount = -container.containerType.internalPrice;
+  const beerName = container.beer?.name ?? "unknown beer";
+
+  const result = await prisma.$transaction(async (tx) => {
+    const updated = await tx.container.update({
+      where: { id: containerId },
+      data: {
+        beerId: null,
+        isEmpty: true,
+        isReserved: false,
+        reservedFor: null,
+      },
+      include: { containerType: true, beer: true, location: true },
+    });
+
+    const entry = await tx.accountEntry.create({
+      data: {
+        brewerId,
+        amount,
+        type: "self_consumption",
+        description: `Self-consumed ${container.containerType.name} (${beerName})`,
+      },
+    });
+
+    return { container: updated, accountEntry: entry };
+  });
+
+  res.json(result);
+});
+
+// Container Return: move + empty container + debit brewer deposit
+actionsRouter.post("/container-return", async (req: Request, res: Response) => {
+  const { containerId, brewerId, returnLocationId } = req.body;
+
+  if (!containerId || !brewerId || !returnLocationId) {
+    res.status(400).json({
+      error: "containerId, brewerId, and returnLocationId are required",
+    });
+    return;
+  }
+
+  const [container, brewer, location] = await Promise.all([
+    prisma.container.findUnique({
+      where: { id: containerId },
+      include: { containerType: true },
+    }),
+    prisma.brewer.findUnique({ where: { id: brewerId } }),
+    prisma.location.findUnique({ where: { id: returnLocationId } }),
+  ]);
+
+  if (!container) { res.status(404).json({ error: "Container not found" }); return; }
+  if (!brewer) { res.status(404).json({ error: "Brewer not found" }); return; }
+  if (!location) { res.status(404).json({ error: "Return location not found" }); return; }
+
+  const amount = -container.containerType.depositFee;
+
+  const result = await prisma.$transaction(async (tx) => {
+    const updated = await tx.container.update({
+      where: { id: containerId },
+      data: {
+        locationId: returnLocationId,
+        beerId: null,
+        isEmpty: true,
+        isReserved: false,
+        reservedFor: null,
+      },
+      include: { containerType: true, beer: true, location: true },
+    });
+
+    const entry = await tx.accountEntry.create({
+      data: {
+        brewerId,
+        amount,
+        type: "container_return",
+        description: `Container returned: ${container.containerType.name}`,
+      },
+    });
+
+    return { container: updated, accountEntry: entry };
+  });
+
+  res.json(result);
+});
