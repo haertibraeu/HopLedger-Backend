@@ -35,4 +35,8 @@ Phases that are tracked as GitHub issues in the correct repository are marked be
 
 ## Status
 
-✅ All issues have been created in their respective repositories (as of 2026-03-20).
+✅ All phases implemented and pushed. All issues auto-closed via commit messages.
+
+- **Backend:** TypeScript + Express + Prisma v6 — complete REST API with CRUD, inventory actions, accounting, combined actions, public endpoint
+- **Website:** Jekyll + GitHub Pages — inventory display with GitHub Action sync
+- **Android:** Kotlin + Jetpack Compose — full app with 3 tabs (Inventory, Accounting, Settings)
