@@ -1,0 +1,45 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: hopledger
+      POSTGRES_PASSWORD: hopledger
+      POSTGRES_DB: hopledger
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hopledger"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  db-test:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: hopledger
+      POSTGRES_PASSWORD: hopledger
+      POSTGRES_DB: hopledger_test
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hopledger"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  backend:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://hopledger:hopledger@db:5432/hopledger?schema=public
+      PORT: 3000
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  pgdata:
