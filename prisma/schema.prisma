@@ -6,3 +6,84 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+model Brewer {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  accountEntries AccountEntry[]
+
+  @@map("brewers")
+}
+
+model Beer {
+  id        String   @id @default(uuid())
+  name      String
+  style     String?
+  batchId   String?  @map("batch_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  containers Container[]
+
+  @@map("beers")
+}
+
+model Location {
+  id        String   @id @default(uuid())
+  name      String
+  type      String   @default("general") // e.g. "brewer", "brewery", "customer", "general"
+  brewerId  String?  @map("brewer_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  containers Container[]
+
+  @@map("locations")
+}
+
+model ContainerType {
+  id            String   @id @default(uuid())
+  name          String   // e.g. "0.5l Bottle", "2l Bottle", "10l Keg"
+  icon          String?
+  externalPrice Float    @default(0) @map("external_price") // selling price
+  internalPrice Float    @default(0) @map("internal_price") // self-consumption price
+  depositFee    Float    @default(0) @map("deposit_fee")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  containers Container[]
+
+  @@map("container_types")
+}
+
+model Container {
+  id              String        @id @default(uuid())
+  containerTypeId String        @map("container_type_id")
+  containerType   ContainerType @relation(fields: [containerTypeId], references: [id])
+  beerId          String?       @map("beer_id")
+  beer            Beer?         @relation(fields: [beerId], references: [id])
+  locationId      String        @map("location_id")
+  location        Location      @relation(fields: [locationId], references: [id])
+  isEmpty         Boolean       @default(true) @map("is_empty")
+  isReserved      Boolean       @default(false) @map("is_reserved")
+  reservedFor     String?       @map("reserved_for")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+
+  @@map("containers")
+}
+
+model AccountEntry {
+  id          String   @id @default(uuid())
+  brewerId    String   @map("brewer_id")
+  brewer      Brewer   @relation(fields: [brewerId], references: [id])
+  amount      Float    // positive = income/credit, negative = expense/debit
+  type        String   // e.g. "sale", "self_consumption", "container_return", "manual"
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("account_entries")
+}

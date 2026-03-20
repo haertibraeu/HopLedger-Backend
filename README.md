@@ -67,3 +67,39 @@ docker compose up -d db
 | Method | Path | Description |
 |--------|------|-------------|
 | `GET` | `/api/health` | Health check + DB status |
+
+### Brewers
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/brewers` | List all brewers |
+| `GET` | `/api/brewers/:id` | Get brewer by ID |
+| `POST` | `/api/brewers` | Create brewer |
+| `PUT` | `/api/brewers/:id` | Update brewer |
+| `DELETE` | `/api/brewers/:id` | Delete brewer |
+
+### Beers
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/beers` | List all beers |
+| `GET` | `/api/beers/:id` | Get beer by ID |
+| `POST` | `/api/beers` | Create beer |
+| `PUT` | `/api/beers/:id` | Update beer |
+| `DELETE` | `/api/beers/:id` | Delete beer |
+
+### Locations
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/locations` | List all (filter: `?type=customer`) |
+| `GET` | `/api/locations/:id` | Get location by ID |
+| `POST` | `/api/locations` | Create location |
+| `PUT` | `/api/locations/:id` | Update location |
+| `DELETE` | `/api/locations/:id` | Delete location |
+
+### Container Types
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/container-types` | List all container types |
+| `GET` | `/api/container-types/:id` | Get container type by ID |
+| `POST` | `/api/container-types` | Create container type |
+| `PUT` | `/api/container-types/:id` | Update container type |
+| `DELETE` | `/api/container-types/:id` | Delete container type |
