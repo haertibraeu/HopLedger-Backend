@@ -21,6 +21,9 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
   "type": "commonjs",
   "bugs": {
     "url": "https://github.com/haertibraeu/HopLedger-Backend/issues"

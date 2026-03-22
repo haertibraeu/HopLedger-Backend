@@ -76,14 +76,27 @@ model Container {
   @@map("containers")
 }
 
+model Category {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  accountEntries AccountEntry[]
+
+  @@map("categories")
+}
+
 model AccountEntry {
-  id          String   @id @default(uuid())
-  brewerId    String   @map("brewer_id")
-  brewer      Brewer   @relation(fields: [brewerId], references: [id])
-  amount      Float    // positive = income/credit, negative = expense/debit
-  type        String   // e.g. "sale", "self_consumption", "container_return", "manual"
+  id          String    @id @default(uuid())
+  brewerId    String    @map("brewer_id")
+  brewer      Brewer    @relation(fields: [brewerId], references: [id])
+  amount      Float     // positive = income/credit, negative = expense/debit
+  type        String    // e.g. "sale", "self_consumption", "container_return", "manual"
   description String?
-  createdAt   DateTime @default(now()) @map("created_at")
+  categoryId  String?   @map("category_id")
+  category    Category? @relation(fields: [categoryId], references: [id])
+  createdAt   DateTime  @default(now()) @map("created_at")
 
   @@map("account_entries")
 }

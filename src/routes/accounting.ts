@@ -1,9 +1,10 @@
 import { Router, Request, Response } from "express";
 import { prisma } from "../utils/prisma";
+import { getParam } from "../utils/params";
 
 export const accountingRouter = Router();
 
-// Get all balances (net balance per brewer)
+// Get all balances (relative balance per brewer — split-the-bills style)
 accountingRouter.get("/balances", async (_req: Request, res: Response) => {
   const entries = await prisma.accountEntry.groupBy({
     by: ["brewerId"],
@@ -12,14 +13,27 @@ accountingRouter.get("/balances", async (_req: Request, res: Response) => {
 
   const brewers = await prisma.brewer.findMany({ orderBy: { name: "asc" } });
 
-  const balances = brewers.map((brewer) => {
+  if (brewers.length === 0) {
+    res.json([]);
+    return;
+  }
+
+  // Compute absolute balances
+  const absoluteBalances = brewers.map((brewer) => {
     const entry = entries.find((e) => e.brewerId === brewer.id);
-    return {
-      brewerId: brewer.id,
-      brewerName: brewer.name,
-      balance: entry?._sum.amount ?? 0,
-    };
+    return entry?._sum.amount ?? 0;
   });
+
+  // Compute average across all brewers for the split-the-bills model
+  const total = absoluteBalances.reduce((sum, b) => sum + b, 0);
+  const average = total / brewers.length;
+
+  // Return relative balance: how much above/below the group average each brewer is
+  const balances = brewers.map((brewer, i) => ({
+    brewerId: brewer.id,
+    brewerName: brewer.name,
+    balance: Math.round((absoluteBalances[i]! - average) * 100) / 100,
+  }));
 
   res.json(balances);
 });
@@ -37,7 +51,7 @@ accountingRouter.get("/entries", async (req: Request, res: Response) => {
   const [entries, total] = await Promise.all([
     prisma.accountEntry.findMany({
       where,
-      include: { brewer: true },
+      include: { brewer: true, category: true },
       orderBy: { createdAt: "desc" },
       take,
       skip,
@@ -58,7 +72,7 @@ accountingRouter.get("/entries", async (req: Request, res: Response) => {
 
 // Create a manual accounting entry
 accountingRouter.post("/entries", async (req: Request, res: Response) => {
-  const { brewerId, amount, type, description } = req.body;
+  const { brewerId, amount, type, description, categoryId } = req.body;
 
   if (!brewerId) {
     res.status(400).json({ error: "brewerId is required" });
@@ -76,14 +90,24 @@ accountingRouter.post("/entries", async (req: Request, res: Response) => {
     return;
   }
 
+  // Verify category exists if provided
+  if (categoryId) {
+    const category = await prisma.category.findUnique({ where: { id: categoryId } });
+    if (!category) {
+      res.status(404).json({ error: "Category not found" });
+      return;
+    }
+  }
+
   const entry = await prisma.accountEntry.create({
     data: {
       brewerId,
       amount,
       type: type || "manual",
       description: description?.trim() || null,
+      categoryId: categoryId || null,
     },
-    include: { brewer: true },
+    include: { brewer: true, category: true },
   });
 
   res.status(201).json(entry);
@@ -97,19 +121,44 @@ accountingRouter.get("/settlements", async (_req: Request, res: Response) => {
   });
 
   const brewers = await prisma.brewer.findMany();
-  const brewerMap = new Map(brewers.map((b) => [b.id, b.name]));
 
-  // Calculate net balances
-  const balances: { id: string; name: string; balance: number }[] = brewers.map((b) => ({
+  if (brewers.length === 0) {
+    res.json([]);
+    return;
+  }
+
+  // Calculate absolute balances
+  const absoluteBalances = brewers.map((b) => ({
     id: b.id,
     name: b.name,
-    balance: entries.find((e) => e.brewerId === b.id)?._sum.amount ?? 0,
+    absolute: entries.find((e) => e.brewerId === b.id)?._sum.amount ?? 0,
+  }));
+
+  // Convert to relative balances (split-the-bills: deviation from average)
+  const total = absoluteBalances.reduce((sum, b) => sum + b.absolute, 0);
+  const average = total / brewers.length;
+
+  const relativeBalances: BrewerBalance[] = absoluteBalances.map((b) => ({
+    id: b.id,
+    name: b.name,
+    balance: Math.round((b.absolute - average) * 100) / 100,
   }));
 
   // Netting algorithm: simplify debts
-  const settlements = calculateSettlements(balances);
+  const settlements = calculateSettlements(relativeBalances);
 
   res.json(settlements);
+});
+
+// Delete an accounting entry
+accountingRouter.delete("/entries/:id", async (req: Request, res: Response) => {
+  const id = getParam(req, "id");
+  try {
+    await prisma.accountEntry.delete({ where: { id } });
+    res.status(204).send();
+  } catch {
+    res.status(404).json({ error: "Entry not found" });
+  }
 });
 
 interface BrewerBalance {

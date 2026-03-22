@@ -9,6 +9,7 @@ import { containerTypesRouter } from "./routes/containerTypes";
 import { containersRouter } from "./routes/containers";
 import { accountingRouter } from "./routes/accounting";
 import { actionsRouter } from "./routes/actions";
+import { categoriesRouter } from "./routes/categories";
 import { publicRouter } from "./routes/public";
 import { apiKeyAuth } from "./middleware/auth";
 import { errorHandler } from "./middleware/errorHandler";
@@ -33,6 +34,7 @@ export function createApp() {
   app.use("/api/containers", containersRouter);
   app.use("/api/accounting", accountingRouter);
   app.use("/api/actions", actionsRouter);
+  app.use("/api/categories", categoriesRouter);
 
   // Error handling
   app.use(errorHandler);
