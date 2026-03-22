@@ -176,37 +176,39 @@ interface Settlement {
 function calculateSettlements(balances: BrewerBalance[]): Settlement[] {
   const settlements: Settlement[] = [];
 
-  // Separate debtors (negative balance) and creditors (positive balance)
-  const debtors = balances
+  // Positive balance = holds more cash than fair share → must pay out to the group.
+  // Negative balance = holds less cash than fair share → will receive from the group.
+  const payers = balances
+    .filter((b) => b.balance > 0)
+    .map((b) => ({ ...b }))
+    .sort((a, b) => b.balance - a.balance);
+
+  const receivers = balances
     .filter((b) => b.balance < 0)
     .map((b) => ({ ...b, balance: Math.abs(b.balance) }))
     .sort((a, b) => b.balance - a.balance);
 
-  const creditors = balances
-    .filter((b) => b.balance > 0)
-    .sort((a, b) => b.balance - a.balance);
+  let pi = 0;
+  let ri = 0;
 
-  let di = 0;
-  let ci = 0;
-
-  while (di < debtors.length && ci < creditors.length) {
-    const debtor = debtors[di]!;
-    const creditor = creditors[ci]!;
-    const amount = Math.min(debtor.balance, creditor.balance);
+  while (pi < payers.length && ri < receivers.length) {
+    const payer = payers[pi]!;
+    const receiver = receivers[ri]!;
+    const amount = Math.min(payer.balance, receiver.balance);
 
     if (amount > 0.01) {
       settlements.push({
-        from: { id: debtor.id, name: debtor.name },
-        to: { id: creditor.id, name: creditor.name },
+        from: { id: payer.id, name: payer.name },
+        to: { id: receiver.id, name: receiver.name },
         amount: Math.round(amount * 100) / 100,
       });
     }
 
-    debtor.balance -= amount;
-    creditor.balance -= amount;
+    payer.balance -= amount;
+    receiver.balance -= amount;
 
-    if (debtor.balance < 0.01) di++;
-    if (creditor.balance < 0.01) ci++;
+    if (payer.balance < 0.01) pi++;
+    if (receiver.balance < 0.01) ri++;
   }
 
   return settlements;
