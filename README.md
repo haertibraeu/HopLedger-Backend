@@ -52,6 +52,47 @@ docker compose up -d
 docker compose up -d db
 ```
 
+## Production Deployment (RunTipi on Raspberry Pi)
+
+Every push to `main` automatically builds and publishes a multi-arch Docker image (`linux/amd64` + `linux/arm64`) to GitHub Container Registry via GitHub Actions:
+
+```
+ghcr.io/haertibraeu/hopledger-backend:latest
+```
+
+> **After the first CI run**, make the package public:  
+> GitHub → your profile → Packages → `hopledger-backend` → Package settings → Change visibility → **Public**
+
+### Adding to RunTipi
+
+1. **Add this repo as a custom app store** in RunTipi:  
+   Settings → App Stores → Add Store → `https://github.com/HAERTIBRAEU/HopLedger-Backend`
+
+2. **Install the app** from App Store → Custom → HopLedger Backend.  
+   Fill in the form fields:
+   - **API Key** — a strong secret (e.g. `openssl rand -hex 32`). Leave empty to disable auth.
+   - **Show Locations** — whether the public inventory endpoint includes location names.
+   - The database password is auto-generated.
+
+3. The container applies database migrations automatically on startup — no manual setup needed.
+
+### API Key
+
+The backend validates the `X-API-Key` HTTP header on all protected endpoints.  
+The `API_KEY` environment variable (set via the RunTipi install form) holds the expected value.
+
+- **RunTipi**: set once in the install form; update via app settings if you need to rotate it.
+- **Android app**: enter the same secret under Settings → API Key.
+- **Empty `API_KEY`**: disables authentication entirely (dev/trusted-network mode only).
+
+### Categories seed
+
+Default expense categories are not seeded automatically in production. Run once after first deploy if needed:
+
+```bash
+docker exec -it hopledger-backend npx tsx prisma/seed.ts
+```
+
 ## Environment Variables
 
 | Variable | Description | Default |
@@ -62,11 +103,6 @@ docker compose up -d db
 | `SHOW_LOCATIONS` | Show locations in public inventory | `true` |
 
 ## API Endpoints
-
-### Public
-| Method | Path | Description |
-|--------|------|-------------|
-| `GET` | `/api/health` | Health check + DB status |
 
 ### Brewers
 | Method | Path | Description |
@@ -126,6 +162,15 @@ docker compose up -d db
 | `POST` | `/api/accounting/entries` | Create manual entry |
 | `GET` | `/api/accounting/settlements` | Settlement suggestions |
 
+### Categories
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/categories` | List all categories |
+| `GET` | `/api/categories/:id` | Get category by ID |
+| `POST` | `/api/categories` | Create category |
+| `PUT` | `/api/categories/:id` | Update category |
+| `DELETE` | `/api/categories/:id` | Delete category |
+
 ### Combined Actions
 | Method | Path | Description |
 |--------|------|-------------|
@@ -133,7 +178,8 @@ docker compose up -d db
 | `POST` | `/api/actions/self-consume` | Brewer self-consumes container |
 | `POST` | `/api/actions/container-return` | Customer returns container |
 
-### Public (no auth)
+### Public (no auth required)
 | Method | Path | Description |
 |--------|------|-------------|
-| `GET` | `/api/public/inventory` | Available inventory (for website) |
+| `GET` | `/api/health` | Health check + DB status |
+| `GET` | `/api/public/inventory` | Available inventory (for website/display) |
