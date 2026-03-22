@@ -1,0 +1,40 @@
+{
+  "name": "HopLedger Backend",
+  "available": true,
+  "exposable": true,
+  "port": 3000,
+  "id": "hopledger-backend",
+  "tipiVersion": 1,
+  "version": "1.0.0",
+  "categories": ["utilities"],
+  "description": "REST API backend for HopLedger — a micro-brewery inventory and accounting app. Manages brewers, beers, containers, locations and a shared ledger.",
+  "shortDesc": "Micro-brewery inventory & accounting API",
+  "author": "HAERTIBRAEU",
+  "source": "https://github.com/HAERTIBRAEU/HopLedger-Backend",
+  "supported_architectures": ["arm64", "amd64"],
+  "form_fields": [
+    {
+      "type": "random",
+      "label": "Database Password",
+      "env_variable": "DB_PASSWORD",
+      "encoding": "hex",
+      "min": 32,
+      "max": 32
+    },
+    {
+      "type": "text",
+      "label": "API Key",
+      "hint": "Secret key the Android app sends in the x-api-key header. Leave empty to disable authentication (not recommended in production).",
+      "env_variable": "API_KEY",
+      "required": false
+    },
+    {
+      "type": "boolean",
+      "label": "Show Locations in public inventory",
+      "hint": "When enabled, the public /api/public/inventory endpoint includes location names.",
+      "env_variable": "SHOW_LOCATIONS",
+      "default": true,
+      "required": false
+    }
+  ]
+}

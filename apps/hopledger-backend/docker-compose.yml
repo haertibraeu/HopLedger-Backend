@@ -1,0 +1,41 @@
+version: "3.9"
+
+services:
+  hopledger-backend:
+    image: ghcr.io/haertibraeu/hopledger-backend:latest
+    container_name: hopledger-backend
+    restart: unless-stopped
+    ports:
+      - ${APP_PORT}:3000
+    environment:
+      - DATABASE_URL=postgresql://hopledger:${DB_PASSWORD}@hopledger-backend-db:5432/hopledger?schema=public
+      - PORT=3000
+      - API_KEY=${API_KEY}
+      - SHOW_LOCATIONS=${SHOW_LOCATIONS:-true}
+    depends_on:
+      hopledger-backend-db:
+        condition: service_healthy
+    networks:
+      - tipi_main_network
+
+  hopledger-backend-db:
+    image: postgres:16-alpine
+    container_name: hopledger-backend-db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=hopledger
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=hopledger
+    volumes:
+      - ${APP_DATA_DIR}/data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hopledger -d hopledger"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - tipi_main_network
+
+networks:
+  tipi_main_network:
+    external: true
