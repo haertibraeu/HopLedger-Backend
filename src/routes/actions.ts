@@ -59,6 +59,70 @@ actionsRouter.post("/sell", async (req: Request, res: Response) => {
   res.json(result);
 });
 
+// Batch-sell: move multiple containers to customer + single combined accounting entry
+actionsRouter.post("/batch-sell", async (req: Request, res: Response) => {
+  const { containerIds, brewerId, customerLocationId, description } = req.body;
+
+  if (!Array.isArray(containerIds) || containerIds.length === 0 || !brewerId || !customerLocationId) {
+    res.status(400).json({
+      error: "containerIds (non-empty array), brewerId, and customerLocationId are required",
+    });
+    return;
+  }
+
+  const [containers, brewer, location] = await Promise.all([
+    prisma.container.findMany({
+      where: { id: { in: containerIds } },
+      include: { containerType: true },
+    }),
+    prisma.brewer.findUnique({ where: { id: brewerId } }),
+    prisma.location.findUnique({ where: { id: customerLocationId } }),
+  ]);
+
+  if (containers.length !== containerIds.length) {
+    res.status(404).json({ error: "One or more containers not found" });
+    return;
+  }
+  if (!brewer) { res.status(404).json({ error: "Brewer not found" }); return; }
+  if (!location) { res.status(404).json({ error: "Customer location not found" }); return; }
+
+  const emptyContainer = containers.find((c) => c.isEmpty);
+  if (emptyContainer) {
+    res.status(422).json({ error: `Container ${emptyContainer.id} is empty and cannot be sold` });
+    return;
+  }
+
+  const totalAmount = containers.reduce(
+    (sum, c) => sum + c.containerType.externalPrice + c.containerType.depositFee,
+    0,
+  );
+
+  const result = await prisma.$transaction(async (tx) => {
+    const updatedContainers = await Promise.all(
+      containers.map((c) =>
+        tx.container.update({
+          where: { id: c.id },
+          data: { locationId: customerLocationId, isReserved: false, reservedFor: null },
+          include: { containerType: true, beer: true, location: true },
+        }),
+      ),
+    );
+
+    const entry = await tx.accountEntry.create({
+      data: {
+        brewerId,
+        amount: totalAmount,
+        type: "sale",
+        description: description ?? `Sold ${containers.length} container(s) to ${location.name}`,
+      },
+    });
+
+    return { containers: updatedContainers, accountEntry: entry };
+  });
+
+  res.json(result);
+});
+
 // Self-Consume: empty container + debit brewer
 actionsRouter.post("/self-consume", async (req: Request, res: Response) => {
   const { containerId, brewerId, description } = req.body;
