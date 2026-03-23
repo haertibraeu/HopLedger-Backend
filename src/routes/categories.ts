@@ -26,28 +26,31 @@ categoriesRouter.get("/:id", async (req: Request, res: Response) => {
 
 // Create category
 categoriesRouter.post("/", async (req: Request, res: Response) => {
-  const { name } = req.body;
+  const { name, type } = req.body;
   if (!name || typeof name !== "string" || name.trim().length === 0) {
     res.status(400).json({ error: "Name is required" });
     return;
   }
+  const categoryType = type === "expense" ? "expense" : "income";
   const category = await prisma.category.create({
-    data: { name: name.trim() },
+    data: { name: name.trim(), type: categoryType },
   });
   res.status(201).json(category);
 });
 
 // Update category
 categoriesRouter.put("/:id", async (req: Request, res: Response) => {
-  const { name } = req.body;
+  const { name, type } = req.body;
   if (!name || typeof name !== "string" || name.trim().length === 0) {
     res.status(400).json({ error: "Name is required" });
     return;
   }
   try {
+    const updateData: { name: string; type?: string } = { name: name.trim() };
+    if (type === "income" || type === "expense") updateData.type = type;
     const category = await prisma.category.update({
       where: { id: getParam(req, "id") },
-      data: { name: name.trim() },
+      data: updateData,
     });
     res.json(category);
   } catch {
