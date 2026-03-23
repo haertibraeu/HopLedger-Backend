@@ -51,7 +51,7 @@ The server runs at `http://localhost:3000`. Check health: `GET /api/health`
 A multi-arch Docker image (`linux/amd64` + `linux/arm64`) is automatically built and published to GitHub Container Registry on every push to `main`:
 
 ```
-ghcr.io/thereallinusrg/hopledger-backend:latest
+ghcr.io/haertibraeu/hopledger-backend:latest
 ```
 
 Choose a deployment method:

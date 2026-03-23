@@ -12,11 +12,12 @@
 Every push to `main` automatically builds and publishes a multi-arch Docker image (`linux/amd64` + `linux/arm64`) to GitHub Container Registry:
 
 ```
-ghcr.io/thereallinusrg/hopledger-backend:latest
+ghcr.io/haertibraeu/hopledger-backend:latest
 ```
 
 > **After the first CI run**, make the package public:  
-> GitHub → your profile (thereallinusrg) → Packages → `hopledger-backend` → Package settings → Change visibility → **Public**
+> GitHub → organization settings → Member privileges → enable **"Allow members to change package visibility"** → Save.  
+> Then go to the package settings and set visibility to **Public**.
 
 ## Installation
 

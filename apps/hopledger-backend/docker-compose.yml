@@ -1,6 +1,6 @@
 services:
   hopledger-backend:
-    image: ghcr.io/thereallinusrg/hopledger-backend:latest
+    image: ghcr.io/haertibraeu/hopledger-backend:latest
     container_name: hopledger-backend
     restart: unless-stopped
     ports:

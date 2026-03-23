@@ -39,7 +39,7 @@ services:
     restart: unless-stopped
 
   backend:
-    image: ghcr.io/thereallinusrg/hopledger-backend:latest
+    image: ghcr.io/haertibraeu/hopledger-backend:latest
     ports:
       - "3000:3000"
     environment:
