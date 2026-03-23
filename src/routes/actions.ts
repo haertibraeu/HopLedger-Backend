@@ -5,7 +5,7 @@ export const actionsRouter = Router();
 
 // Sell: move container to customer + credit brewer
 actionsRouter.post("/sell", async (req: Request, res: Response) => {
-  const { containerId, brewerId, customerLocationId } = req.body;
+  const { containerId, brewerId, customerLocationId, description } = req.body;
 
   if (!containerId || !brewerId || !customerLocationId) {
     res.status(400).json({
@@ -49,7 +49,7 @@ actionsRouter.post("/sell", async (req: Request, res: Response) => {
         brewerId,
         amount,
         type: "sale",
-        description: `Sold ${container.containerType.name} to customer`,
+        description: description ?? `Sold ${container.containerType.name} to customer`,
       },
     });
 
@@ -61,7 +61,7 @@ actionsRouter.post("/sell", async (req: Request, res: Response) => {
 
 // Self-Consume: empty container + debit brewer
 actionsRouter.post("/self-consume", async (req: Request, res: Response) => {
-  const { containerId, brewerId } = req.body;
+  const { containerId, brewerId, description } = req.body;
 
   if (!containerId || !brewerId) {
     res.status(400).json({ error: "containerId and brewerId are required" });
@@ -103,7 +103,7 @@ actionsRouter.post("/self-consume", async (req: Request, res: Response) => {
         brewerId,
         amount,
         type: "self_consumption",
-        description: `Self-consumed ${container.containerType.name} (${beerName})`,
+        description: description ?? `Self-consumed ${container.containerType.name} (${beerName})`,
       },
     });
 
@@ -115,7 +115,7 @@ actionsRouter.post("/self-consume", async (req: Request, res: Response) => {
 
 // Container Return: move + empty container + debit brewer deposit
 actionsRouter.post("/container-return", async (req: Request, res: Response) => {
-  const { containerId, brewerId, returnLocationId } = req.body;
+  const { containerId, brewerId, returnLocationId, description } = req.body;
 
   if (!containerId || !brewerId || !returnLocationId) {
     res.status(400).json({
@@ -157,7 +157,7 @@ actionsRouter.post("/container-return", async (req: Request, res: Response) => {
         brewerId,
         amount,
         type: "container_return",
-        description: `Container returned: ${container.containerType.name}`,
+        description: description ?? `Container returned: ${container.containerType.name}`,
       },
     });
 
