@@ -4,7 +4,7 @@
 
 ## Prerequisites
 
-- RunTipi installed and running on your server
+- RunTipi v3.0.0 or newer installed and running on your server
 - This repository accessible (public GitHub repo)
 
 ## Docker Image

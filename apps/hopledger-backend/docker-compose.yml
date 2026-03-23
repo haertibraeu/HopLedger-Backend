@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   hopledger-backend:
     image: ghcr.io/haertibraeu/hopledger-backend:latest
@@ -17,6 +15,27 @@ services:
         condition: service_healthy
     networks:
       - tipi_main_network
+    labels:
+      traefik.enable: true
+      traefik.http.middlewares.hopledger-backend-web-redirect.redirectscheme.scheme: https
+      traefik.http.services.hopledger-backend.loadbalancer.server.port: 3000
+      traefik.http.routers.hopledger-backend-insecure.rule: Host(`${APP_DOMAIN}`)
+      traefik.http.routers.hopledger-backend-insecure.entrypoints: web
+      traefik.http.routers.hopledger-backend-insecure.service: hopledger-backend
+      traefik.http.routers.hopledger-backend-insecure.middlewares: hopledger-backend-web-redirect
+      traefik.http.routers.hopledger-backend.rule: Host(`${APP_DOMAIN}`)
+      traefik.http.routers.hopledger-backend.entrypoints: websecure
+      traefik.http.routers.hopledger-backend.service: hopledger-backend
+      traefik.http.routers.hopledger-backend.tls.certresolver: myresolver
+      traefik.http.routers.hopledger-backend-local-insecure.rule: Host(`hopledger-backend.${LOCAL_DOMAIN}`)
+      traefik.http.routers.hopledger-backend-local-insecure.entrypoints: web
+      traefik.http.routers.hopledger-backend-local-insecure.service: hopledger-backend
+      traefik.http.routers.hopledger-backend-local-insecure.middlewares: hopledger-backend-web-redirect
+      traefik.http.routers.hopledger-backend-local.rule: Host(`hopledger-backend.${LOCAL_DOMAIN}`)
+      traefik.http.routers.hopledger-backend-local.entrypoints: websecure
+      traefik.http.routers.hopledger-backend-local.service: hopledger-backend
+      traefik.http.routers.hopledger-backend-local.tls: true
+      runtipi.managed: true
 
   hopledger-backend-db:
     image: postgres:16-alpine
