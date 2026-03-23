@@ -8,7 +8,8 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  # Push to personal account so the package can be made public
+  IMAGE_NAME: thereallinusrg/hopledger-backend
 
 jobs:
   build-and-push:
@@ -26,8 +27,8 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: thereallinusrg
+          password: ${{ secrets.PACKAGES_TOKEN }}
 
       - name: Extract metadata
         id: meta

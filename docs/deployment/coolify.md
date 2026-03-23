@@ -39,7 +39,7 @@ services:
     restart: unless-stopped
 
   backend:
-    image: ghcr.io/haertibraeu/hopledger-backend:latest
+    image: ghcr.io/thereallinusrg/hopledger-backend:latest
     environment:
       DATABASE_URL: postgresql://hopledger:${DB_PASSWORD}@db:5432/hopledger?schema=public
       PORT: 3000
