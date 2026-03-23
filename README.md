@@ -8,19 +8,18 @@ REST API for micro-brewery inventory management and split-bill accounting.
 - **Language:** TypeScript
 - **Database:** PostgreSQL via Prisma ORM
 - **Auth:** Simple API key (`X-API-Key` header)
-- **Deployment:** Docker Compose
 
-## Quick Start
+## Local Development
 
 ```bash
-# 1. Start PostgreSQL
+# 1. Copy env file and adjust values
+cp .env.example .env
+
+# 2. Start PostgreSQL
 docker compose up -d db
 
-# 2. Install dependencies
+# 3. Install dependencies
 npm install
-
-# 3. Copy env file
-cp .env.example .env
 
 # 4. Run migrations
 npx prisma migrate dev
@@ -42,56 +41,25 @@ The server runs at `http://localhost:3000`. Check health: `GET /api/health`
 | `npm run prisma:migrate` | Run database migrations |
 | `npm run prisma:studio` | Open Prisma Studio GUI |
 
-## Docker
+## Deployment
 
-```bash
-# Full stack (backend + database)
-docker compose up -d
-
-# Just the database (for local dev)
-docker compose up -d db
-```
-
-## Production Deployment (RunTipi on Raspberry Pi)
-
-Every push to `main` automatically builds and publishes a multi-arch Docker image (`linux/amd64` + `linux/arm64`) to GitHub Container Registry via GitHub Actions:
+A multi-arch Docker image (`linux/amd64` + `linux/arm64`) is automatically built and published to GitHub Container Registry on every push to `main`:
 
 ```
 ghcr.io/haertibraeu/hopledger-backend:latest
 ```
 
-> **After the first CI run**, make the package public:  
-> GitHub → your profile → Packages → `hopledger-backend` → Package settings → Change visibility → **Public**
+Choose a deployment method:
 
-### Adding to RunTipi
-
-1. **Add this repo as a custom app store** in RunTipi:  
-   Settings → App Stores → Add Store → `https://github.com/HAERTIBRAEU/HopLedger-Backend`
-
-2. **Install the app** from App Store → Custom → HopLedger Backend.  
-   Fill in the form fields:
-   - **API Key** — a strong secret (e.g. `openssl rand -hex 32`). Leave empty to disable auth.
-   - **Show Locations** — whether the public inventory endpoint includes location names.
-   - The database password is auto-generated.
-
-3. The container applies database migrations automatically on startup — no manual setup needed.
-
-### API Key
-
-The backend validates the `X-API-Key` HTTP header on all protected endpoints.  
-The `API_KEY` environment variable (set via the RunTipi install form) holds the expected value.
-
-- **RunTipi**: set once in the install form; update via app settings if you need to rotate it.
-- **Android app**: enter the same secret under Settings → API Key.
-- **Empty `API_KEY`**: disables authentication entirely (dev/trusted-network mode only).
-
-### Categories seed
-
-Default expense categories are not seeded automatically in production. Run once after first deploy if needed:
-
-```bash
-docker exec -it hopledger-backend npx tsx prisma/seed.ts
-```
+| Guide | Description |
+|-------|-------------|
+| [Docker Compose](docs/deployment/docker-compose.md) | Single-server, full stack via Compose |
+| [RunTipi](docs/deployment/runtipi.md) | One-click install on a RunTipi homelab |
+| [Coolify](docs/deployment/coolify.md) | Self-hosted PaaS (Raspberry Pi / VPS) |
+| [Portainer](docs/deployment/portainer.md) | Docker GUI-based deployment |
+| [Railway](docs/deployment/railway.md) | Managed cloud platform |
+| [Fly.io](docs/deployment/fly-io.md) | Global edge cloud platform |
+| [Bare Metal / VPS](docs/deployment/bare-metal.md) | Direct Node.js with systemd |
 
 ## Environment Variables
 
@@ -102,7 +70,17 @@ docker exec -it hopledger-backend npx tsx prisma/seed.ts
 | `API_KEY` | API key for protected endpoints (empty = no auth) | — |
 | `SHOW_LOCATIONS` | Show locations in public inventory | `true` |
 
+## Authentication
+
+The backend validates the `X-API-Key` HTTP header on all protected endpoints. Set `API_KEY` to a strong secret (e.g. `openssl rand -hex 32`). Leave it empty to disable authentication entirely (dev / trusted-network only).
+
 ## API Endpoints
+
+### Public (no auth required)
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/health` | Health check + DB status |
+| `GET` | `/api/public/inventory` | Available inventory (for website/display) |
 
 ### Brewers
 | Method | Path | Description |
@@ -177,9 +155,3 @@ docker exec -it hopledger-backend npx tsx prisma/seed.ts
 | `POST` | `/api/actions/sell` | Sell container to customer |
 | `POST` | `/api/actions/self-consume` | Brewer self-consumes container |
 | `POST` | `/api/actions/container-return` | Customer returns container |
-
-### Public (no auth required)
-| Method | Path | Description |
-|--------|------|-------------|
-| `GET` | `/api/health` | Health check + DB status |
-| `GET` | `/api/public/inventory` | Available inventory (for website/display) |
