@@ -2,6 +2,11 @@
 
 REST API for micro-brewery inventory management and split-bill accounting.
 
+> ⚠️ **Warning: Opinionated & Over-Engineered**
+>
+> This project is **heavily opinionated**, **over-engineered**, and **vibe-coded**. It is **not localized** and **not safe for production use** at all. Use at your own risk!
+
+
 ## Tech Stack
 
 - **Runtime:** Node.js + Express.js
