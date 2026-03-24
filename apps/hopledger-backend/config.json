@@ -39,6 +39,25 @@
       "env_variable": "SHOW_LOCATIONS",
       "default": true,
       "required": false
+    },
+    {
+      "type": "url",
+      "label": "WebDAV URL (optional)",
+      "hint": "If set, a daily backup of the database is pushed to this WebDAV server at 02:00.",
+      "env_variable": "WEBDAV_URL",
+      "required": false
+    },
+    {
+      "type": "text",
+      "label": "WebDAV Username (optional)",
+      "env_variable": "WEBDAV_USER",
+      "required": false
+    },
+    {
+      "type": "password",
+      "label": "WebDAV Password (optional)",
+      "env_variable": "WEBDAV_PASS",
+      "required": false
     }
   ]
 }

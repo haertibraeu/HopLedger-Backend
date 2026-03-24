@@ -1,5 +1,6 @@
 import { createApp } from "./app";
 import { prisma } from "./utils/prisma";
+import { startWebDavBackupSchedule } from "./utils/webdavPush";
 
 const PORT = process.env["PORT"] || 3000;
 
@@ -12,6 +13,8 @@ async function main() {
     console.error("❌ Failed to connect to database:", error);
     process.exit(1);
   }
+
+  startWebDavBackupSchedule();
 
   const app = createApp();
 
