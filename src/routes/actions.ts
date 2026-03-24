@@ -38,6 +38,8 @@ actionsRouter.post("/sell", async (req: Request, res: Response) => {
       where: { id: containerId },
       data: {
         locationId: customerLocationId,
+        beerId: null,
+        isEmpty: true,
         isReserved: false,
         reservedFor: null,
       },
@@ -102,7 +104,7 @@ actionsRouter.post("/batch-sell", async (req: Request, res: Response) => {
       containers.map((c) =>
         tx.container.update({
           where: { id: c.id },
-          data: { locationId: customerLocationId, isReserved: false, reservedFor: null },
+          data: { locationId: customerLocationId, beerId: null, isEmpty: true, isReserved: false, reservedFor: null },
           include: { containerType: true, beer: true, location: true },
         }),
       ),
