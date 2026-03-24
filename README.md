@@ -59,11 +59,7 @@ Choose a deployment method:
 | Guide | Description |
 |-------|-------------|
 | [Docker Compose](docs/deployment/docker-compose.md) | Single-server, full stack via Compose |
-| [RunTipi](docs/deployment/runtipi.md) | One-click install on a RunTipi homelab |
-| [Coolify](docs/deployment/coolify.md) | Self-hosted PaaS (Raspberry Pi / VPS) |
-| [Portainer](docs/deployment/portainer.md) | Docker GUI-based deployment |
-| [Railway](docs/deployment/railway.md) | Managed cloud platform |
-| [Fly.io](docs/deployment/fly-io.md) | Global edge cloud platform |
+| [Runtipi](docs/deployment/runtipi.md) | One-click install on a Runtipi homelab |
 | [Bare Metal / VPS](docs/deployment/bare-metal.md) | Direct Node.js with systemd |
 
 ## Environment Variables
@@ -74,6 +70,9 @@ Choose a deployment method:
 | `PORT` | Server port | `3000` |
 | `API_KEY` | API key for protected endpoints (empty = no auth) | — |
 | `SHOW_LOCATIONS` | Show locations in public inventory | `true` |
+| `WEBDAV_URL` | WebDAV server URL for daily backups (optional) | — |
+| `WEBDAV_USER` | WebDAV username (optional) | — |
+| `WEBDAV_PASS` | WebDAV password (optional) | — |
 
 ## Authentication
 
@@ -160,3 +159,9 @@ The backend validates the `X-API-Key` HTTP header on all protected endpoints. Se
 | `POST` | `/api/actions/sell` | Sell container to customer |
 | `POST` | `/api/actions/self-consume` | Brewer self-consumes container |
 | `POST` | `/api/actions/container-return` | Customer returns container |
+
+### Backup
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/backup/export` | Download full database as `.sqlite` file |
+| `POST` | `/api/backup/import` | Restore database from `.sqlite` file (field: `backup`) |
