@@ -1,6 +1,6 @@
 {
   "name": "hopledger-backend",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "description": "HopLedger Backend — REST API for micro-brewery inventory & accounting",
   "main": "dist/index.js",
   "scripts": {
