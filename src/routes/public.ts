@@ -11,6 +11,9 @@ publicRouter.get("/inventory", async (_req: Request, res: Response) => {
     where: {
       isEmpty: false,
       isReserved: false,
+      location: {
+        type: { in: ["brewery", "brewer"] },
+      },
     },
     include: {
       beer: true,
