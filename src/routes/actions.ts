@@ -179,6 +179,61 @@ actionsRouter.post("/self-consume", async (req: Request, res: Response) => {
   res.json(result);
 });
 
+// Batch-return: move multiple containers back + single combined accounting entry
+actionsRouter.post("/batch-return", async (req: Request, res: Response) => {
+  const { containerIds, brewerId, returnLocationId, description } = req.body;
+
+  if (!Array.isArray(containerIds) || containerIds.length === 0 || !brewerId || !returnLocationId) {
+    res.status(400).json({
+      error: "containerIds (non-empty array), brewerId, and returnLocationId are required",
+    });
+    return;
+  }
+
+  const [containers, brewer, location] = await Promise.all([
+    prisma.container.findMany({
+      where: { id: { in: containerIds } },
+      include: { containerType: true },
+    }),
+    prisma.brewer.findUnique({ where: { id: brewerId } }),
+    prisma.location.findUnique({ where: { id: returnLocationId } }),
+  ]);
+
+  if (containers.length !== containerIds.length) {
+    res.status(404).json({ error: "One or more containers not found" });
+    return;
+  }
+  if (!brewer) { res.status(404).json({ error: "Brewer not found" }); return; }
+  if (!location) { res.status(404).json({ error: "Return location not found" }); return; }
+
+  const totalAmount = -containers.reduce((sum, c) => sum + c.containerType.depositFee, 0);
+
+  const result = await prisma.$transaction(async (tx) => {
+    const updatedContainers = await Promise.all(
+      containers.map((c) =>
+        tx.container.update({
+          where: { id: c.id },
+          data: { locationId: returnLocationId, beerId: null, isEmpty: true, isReserved: false, reservedFor: null },
+          include: { containerType: true, beer: true, location: true },
+        }),
+      ),
+    );
+
+    const entry = await tx.accountEntry.create({
+      data: {
+        brewerId,
+        amount: totalAmount,
+        type: "container_return",
+        description: description ?? `Returned ${containers.length} container(s) to ${location.name}`,
+      },
+    });
+
+    return { containers: updatedContainers, accountEntry: entry };
+  });
+
+  res.json(result);
+});
+
 // Container Return: move + empty container + debit brewer deposit
 actionsRouter.post("/container-return", async (req: Request, res: Response) => {
   const { containerId, brewerId, returnLocationId, description } = req.body;
