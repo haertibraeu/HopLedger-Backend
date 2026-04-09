@@ -179,6 +179,65 @@ actionsRouter.post("/self-consume", async (req: Request, res: Response) => {
   res.json(result);
 });
 
+// Batch-self-consume: empty multiple containers + single combined accounting entry
+actionsRouter.post("/batch-self-consume", async (req: Request, res: Response) => {
+  const { containerIds, brewerId, description } = req.body;
+
+  if (!Array.isArray(containerIds) || containerIds.length === 0 || !brewerId) {
+    res.status(400).json({
+      error: "containerIds (non-empty array) and brewerId are required",
+    });
+    return;
+  }
+
+  const [containers, brewer] = await Promise.all([
+    prisma.container.findMany({
+      where: { id: { in: containerIds } },
+      include: { containerType: true, beer: true },
+    }),
+    prisma.brewer.findUnique({ where: { id: brewerId } }),
+  ]);
+
+  if (containers.length !== containerIds.length) {
+    res.status(404).json({ error: "One or more containers not found" });
+    return;
+  }
+  if (!brewer) { res.status(404).json({ error: "Brewer not found" }); return; }
+
+  const emptyContainer = containers.find((c) => c.isEmpty);
+  if (emptyContainer) {
+    res.status(422).json({ error: `Container ${emptyContainer.id} is already empty` });
+    return;
+  }
+
+  const totalAmount = -containers.reduce((sum, c) => sum + c.containerType.internalPrice, 0);
+
+  const result = await prisma.$transaction(async (tx) => {
+    const updatedContainers = await Promise.all(
+      containers.map((c) =>
+        tx.container.update({
+          where: { id: c.id },
+          data: { beerId: null, isEmpty: true, isReserved: false, reservedFor: null },
+          include: { containerType: true, beer: true, location: true },
+        }),
+      ),
+    );
+
+    const entry = await tx.accountEntry.create({
+      data: {
+        brewerId,
+        amount: totalAmount,
+        type: "self_consumption",
+        description: description ?? `Self-consumed ${containers.length} container(s)`,
+      },
+    });
+
+    return { containers: updatedContainers, accountEntry: entry };
+  });
+
+  res.json(result);
+});
+
 // Batch-return: move multiple containers back + single combined accounting entry
 actionsRouter.post("/batch-return", async (req: Request, res: Response) => {
   const { containerIds, brewerId, returnLocationId, description } = req.body;

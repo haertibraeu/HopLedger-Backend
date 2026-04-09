@@ -90,8 +90,8 @@ model Category {
 
 model AccountEntry {
   id          String    @id @default(uuid())
-  brewerId    String    @map("brewer_id")
-  brewer      Brewer    @relation(fields: [brewerId], references: [id])
+  brewerId    String?   @map("brewer_id")
+  brewer      Brewer?   @relation(fields: [brewerId], references: [id], onDelete: SetNull)
   amount      Float     // positive = income/credit, negative = expense/debit
   type        String    // e.g. "sale", "self_consumption", "container_return", "manual"
   description String?

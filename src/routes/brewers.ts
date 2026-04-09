@@ -57,14 +57,18 @@ brewersRouter.put("/:id", async (req: Request, res: Response) => {
 
 // Delete brewer
 brewersRouter.delete("/:id", async (req: Request, res: Response) => {
-  try {
-    await prisma.brewer.delete({
-      where: { id: getParam(req, "id") },
-    });
-    res.status(204).send();
-  } catch {
-    res.status(409).json({
-      error: "Cannot delete brewer — may have associated accounting entries",
-    });
+  const id = getParam(req, "id");
+  const brewer = await prisma.brewer.findUnique({ where: { id } });
+  if (!brewer) {
+    res.status(404).json({ error: "Brewer not found" });
+    return;
   }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.accountEntry.updateMany({ where: { brewerId: id }, data: { brewerId: null } });
+    await tx.location.updateMany({ where: { brewerId: id }, data: { brewerId: null } });
+    await tx.brewer.delete({ where: { id } });
+  });
+
+  res.status(204).send();
 });
