@@ -6,6 +6,15 @@ REST API for micro-brewery inventory management and split-bill accounting.
 >
 > This project is **heavily opinionated**, **over-engineered**, and **vibe-coded**. It is **not localized** and **not safe for production use** at all. Use at your own risk!
 
+## Design Philosophy
+
+HopLedger is **container-centric**: the physical container (bottle, keg, etc.) is the central unit of work, not the beer inside it. This has a few important consequences:
+
+- **Prices live on `ContainerType`, not on `Beer`.** A "0.5 L Bottle" has a fixed selling price, internal (self-consumption) price, and deposit fee — regardless of which beer is inside. This reflects how a small brewery actually operates: the bottle format determines the price, not the recipe.
+- **Actions operate on containers.** Selling, self-consuming, and returning are all container operations that move, empty, and account for a container in a single transaction.
+- **Split-the-bills accounting, not double-entry.** Brewer balances are relative to the group average — like Splid or Splitwise. This keeps things simple for a small group of brewers sharing costs and revenue.
+- **No local database on the Android app.** All state lives on the backend. The app is a thin client that fetches everything from the API and persists only the backend URL and API key.
+
 
 ## Tech Stack
 
