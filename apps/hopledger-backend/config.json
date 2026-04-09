@@ -5,8 +5,8 @@
   "exposable": true,
   "port": 3000,
   "id": "hopledger-backend",
-  "tipi_version": 7,
-  "version": "1.3.2",
+  "tipi_version": 8,
+  "version": "1.3.7",
   "categories": ["utilities"],
   "description": "REST API backend for HopLedger — a micro-brewery inventory and accounting app. Manages brewers, beers, containers, locations and a shared ledger.",
   "short_desc": "Micro-brewery inventory & accounting API",
@@ -14,7 +14,7 @@
   "source": "https://github.com/HAERTIBRAEU/HopLedger-Backend",
   "supported_architectures": ["arm64", "amd64"],
   "created_at": 1742723400000,
-  "updated_at": 1774421789814,
+  "updated_at": 1775727190117,
   "min_tipi_version": "3.0.0",
   "form_fields": [
     {
