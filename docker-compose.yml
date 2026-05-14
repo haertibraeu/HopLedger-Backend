@@ -3,7 +3,7 @@ services:
     image: postgres:16-alpine
     environment:
       POSTGRES_USER: hopledger
-      POSTGRES_PASSWORD: hopledger
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
       POSTGRES_DB: hopledger
     ports:
       - "5432:5432"
@@ -15,27 +15,19 @@ services:
       timeout: 3s
       retries: 5
 
-  db-test:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_USER: hopledger
-      POSTGRES_PASSWORD: hopledger
-      POSTGRES_DB: hopledger_test
-    ports:
-      - "5433:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U hopledger -d hopledger_test"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-
   backend:
     build: .
+    #image: ghcr.io/haertibraeu/hopledger-backend:latest
     ports:
       - "3000:3000"
     environment:
-      DATABASE_URL: postgresql://hopledger:hopledger@db:5432/hopledger?schema=public
+      DATABASE_URL: postgresql://hopledger:${DB_PASSWORD:?DB_PASSWORD is required}@db:5432/hopledger?schema=public
       PORT: 3000
+      API_KEY: ${API_KEY}
+      SHOW_LOCATIONS: ${SHOW_LOCATIONS:-true}
+      WEBDAV_URL: ${WEBDAV_URL}
+      WEBDAV_USER: ${WEBDAV_USER}
+      WEBDAV_PASS: ${WEBDAV_PASS}
     depends_on:
       db:
         condition: service_healthy

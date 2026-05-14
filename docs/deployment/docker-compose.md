@@ -1,6 +1,7 @@
 # Deployment: Docker Compose
 
-Runs the backend and a PostgreSQL database together on any machine with Docker installed.
+Runs the backend and a PostgreSQL database together on any machine with Docker installed.  
+The backend container can either be built locally or pulled from GitHubs registry.
 
 ## Prerequisites
 
@@ -24,8 +25,8 @@ cp .env.example .env
 Edit `.env` and set at least:
 
 ```env
+DB_PASSWORD=your-password
 API_KEY=your-strong-secret          # leave empty to disable auth
-SHOW_LOCATIONS=true
 ```
 
 ### 3. Start the stack
@@ -42,6 +43,14 @@ This starts two containers:
 | `backend` | built from `Dockerfile` | `3000` |
 
 Database migrations run automatically on startup.
+
+If you don't want to build the container image locally, but you want to pull from the GitHub registry:
+Comment out "build" and uncomment "image", in the docker-compose.yml.
+```yaml
+  backend:
+    #build: .
+    image: ghcr.io/haertibraeu/hopledger-backend:latest
+```
 
 ### 4. Verify
 
@@ -71,6 +80,14 @@ Run once after the first deploy if you need default expense categories:
 
 ```bash
 docker exec -it hopledger-backend npx tsx prisma/seed.ts
+```
+
+## Seed Test Data
+
+Run once after the first deploy if you need some dummy data:
+
+```bash
+docker exec -it hopledger-backend npx tsx prisma/test_data.ts
 ```
 
 ## Updating

@@ -38,6 +38,9 @@ npm install
 # 4. Run migrations
 npx prisma migrate dev
 
+# 4.1 Insert test data (optional)
+npx tsx ./prisma/test_data.ts
+
 # 5. Start dev server
 npm run dev
 ```

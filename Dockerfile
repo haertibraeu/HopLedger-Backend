@@ -14,7 +14,7 @@ COPY src ./src/
 RUN npm run build
 
 # ── Stage 2: production image ─────────────────────────────────────────────────
-FROM node:22-alpine
+FROM node:24-alpine
 
 WORKDIR /app
 
