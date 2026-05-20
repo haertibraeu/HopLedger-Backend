@@ -6,7 +6,7 @@ export const containersRouter = Router();
 
 // List containers with filters
 containersRouter.get("/", async (req: Request, res: Response) => {
-  const { locationId, beerId, containerTypeId, isEmpty, isReserved } = req.query;
+  const { locationId, beerId, containerTypeId, isEmpty, isReserved, isByob } = req.query;
 
   const where: Record<string, unknown> = {};
   if (locationId && typeof locationId === "string") where["locationId"] = locationId;
@@ -16,6 +16,8 @@ containersRouter.get("/", async (req: Request, res: Response) => {
   if (isEmpty === "false") where["isEmpty"] = false;
   if (isReserved === "true") where["isReserved"] = true;
   if (isReserved === "false") where["isReserved"] = false;
+  if (isByob === "true") where["isByob"] = true;
+  if (isByob === "false") where["isByob"] = false;
 
   const containers = await prisma.container.findMany({
     where,
@@ -48,9 +50,13 @@ containersRouter.get("/:id", async (req: Request, res: Response) => {
 
 // Create container
 containersRouter.post("/", async (req: Request, res: Response) => {
-  const { containerTypeId, locationId, beerId } = req.body;
+  const { containerTypeId, locationId, beerId, isByob, reservedFor } = req.body;
   if (!containerTypeId || !locationId) {
     res.status(400).json({ error: "containerTypeId and locationId are required" });
+    return;
+  }
+  if (isByob && !reservedFor) {
+    res.status(400).json({ error: "reservedFor (owner name) is required for BYOB containers" });
     return;
   }
   const container = await prisma.container.create({
@@ -59,6 +65,8 @@ containersRouter.post("/", async (req: Request, res: Response) => {
       locationId,
       beerId: beerId || null,
       isEmpty: !beerId,
+      isByob: isByob === true,
+      reservedFor: isByob ? reservedFor.trim() : null,
     },
     include: { containerType: true, beer: true, location: true },
   });

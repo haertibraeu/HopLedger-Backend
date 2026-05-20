@@ -70,6 +70,7 @@ model Container {
   isEmpty         Boolean       @default(true) @map("is_empty")
   isReserved      Boolean       @default(false) @map("is_reserved")
   reservedFor     String?       @map("reserved_for")
+  isByob          Boolean       @default(false) @map("is_byob")
   createdAt       DateTime      @default(now()) @map("created_at")
   updatedAt       DateTime      @updatedAt @map("updated_at")
 

@@ -65,20 +65,19 @@ actionsRouter.post("/sell", async (req: Request, res: Response) => {
 actionsRouter.post("/batch-sell", async (req: Request, res: Response) => {
   const { containerIds, brewerId, customerLocationId, description } = req.body;
 
-  if (!Array.isArray(containerIds) || containerIds.length === 0 || !brewerId || !customerLocationId) {
+  if (!Array.isArray(containerIds) || containerIds.length === 0 || !brewerId) {
     res.status(400).json({
-      error: "containerIds (non-empty array), brewerId, and customerLocationId are required",
+      error: "containerIds (non-empty array) and brewerId are required",
     });
     return;
   }
 
-  const [containers, brewer, location] = await Promise.all([
+  const [containers, brewer] = await Promise.all([
     prisma.container.findMany({
       where: { id: { in: containerIds } },
       include: { containerType: true },
     }),
     prisma.brewer.findUnique({ where: { id: brewerId } }),
-    prisma.location.findUnique({ where: { id: customerLocationId } }),
   ]);
 
   if (containers.length !== containerIds.length) {
@@ -86,7 +85,6 @@ actionsRouter.post("/batch-sell", async (req: Request, res: Response) => {
     return;
   }
   if (!brewer) { res.status(404).json({ error: "Brewer not found" }); return; }
-  if (!location) { res.status(404).json({ error: "Customer location not found" }); return; }
 
   const emptyContainer = containers.find((c) => c.isEmpty);
   if (emptyContainer) {
@@ -94,20 +92,36 @@ actionsRouter.post("/batch-sell", async (req: Request, res: Response) => {
     return;
   }
 
-  const totalAmount = containers.reduce(
-    (sum, c) => sum + c.containerType.externalPrice + c.containerType.depositFee,
-    0,
-  );
+  // Non-BYOB containers need a destination location
+  const nonByobContainers = containers.filter((c) => !c.isByob);
+  if (nonByobContainers.length > 0 && !customerLocationId) {
+    res.status(400).json({ error: "customerLocationId is required when selling non-BYOB containers" });
+    return;
+  }
+
+  let location = null;
+  if (customerLocationId) {
+    location = await prisma.location.findUnique({ where: { id: customerLocationId } });
+    if (!location) { res.status(404).json({ error: "Customer location not found" }); return; }
+  }
+
+  const totalAmount = containers.reduce((sum, c) => {
+    const price = c.containerType.externalPrice + (c.isByob ? 0 : c.containerType.depositFee);
+    return sum + price;
+  }, 0);
 
   const result = await prisma.$transaction(async (tx) => {
     const updatedContainers = await Promise.all(
-      containers.map((c) =>
-        tx.container.update({
+      containers.map((c) => {
+        if (c.isByob) {
+          return tx.container.delete({ where: { id: c.id } }).then(() => null);
+        }
+        return tx.container.update({
           where: { id: c.id },
           data: { locationId: customerLocationId, beerId: null, isEmpty: true, isReserved: false, reservedFor: null },
           include: { containerType: true, beer: true, location: true },
-        }),
-      ),
+        });
+      }),
     );
 
     const entry = await tx.accountEntry.create({
@@ -115,11 +129,11 @@ actionsRouter.post("/batch-sell", async (req: Request, res: Response) => {
         brewerId,
         amount: totalAmount,
         type: "sale",
-        description: description ?? `Sold ${containers.length} container(s) to ${location.name}`,
+        description: description ?? `Sold ${containers.length} container(s) to ${location?.name ?? "owner"}`,
       },
     });
 
-    return { containers: updatedContainers, accountEntry: entry };
+    return { containers: updatedContainers.filter(Boolean), accountEntry: entry };
   });
 
   res.json(result);
