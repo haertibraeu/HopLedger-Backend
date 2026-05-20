@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
 import multer from "multer";
-import { buildSqliteBackup, restoreFromSqliteBackup } from "../utils/sqliteExport";
+import { buildSqliteBackup, restoreFromSqliteBackup } from "../utils/sqliteExport.js";
 
 export const backupRouter = Router();
 

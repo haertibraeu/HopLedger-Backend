@@ -1,5 +1,5 @@
 import Database from "better-sqlite3";
-import { prisma } from "./prisma";
+import { prisma } from "./prisma.js";
 
 /**
  * Fetches all data from PostgreSQL via Prisma and writes it into an

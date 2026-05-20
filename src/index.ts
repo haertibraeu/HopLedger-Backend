@@ -1,6 +1,6 @@
-import { createApp } from "./app";
-import { prisma } from "./utils/prisma";
-import { startWebDavBackupSchedule } from "./utils/webdavPush";
+import { createApp } from "./app.js";
+import { prisma } from "./utils/prisma.js";
+import { startWebDavBackupSchedule } from "./utils/webdavPush.js";
 
 const PORT = process.env["PORT"] || 3000;
 

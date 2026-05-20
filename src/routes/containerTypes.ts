@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
-import { prisma } from "../utils/prisma";
-import { getParam } from "../utils/params";
+import { prisma } from "../utils/prisma.js";
+import { getParam } from "../utils/params.js";
 
 export const containerTypesRouter = Router();
 

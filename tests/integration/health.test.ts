@@ -1,6 +1,6 @@
 import request from "supertest";
-import { createApp } from "../../src/app";
-import { prisma } from "../../src/utils/prisma";
+import { createApp } from "../../src/app.js";
+import { prisma } from "../../src/utils/prisma.js";
 
 const app = createApp();
 

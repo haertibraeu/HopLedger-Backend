@@ -1,19 +1,19 @@
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
-import { healthRouter } from "./routes/health";
-import { brewersRouter } from "./routes/brewers";
-import { beersRouter } from "./routes/beers";
-import { locationsRouter } from "./routes/locations";
-import { containerTypesRouter } from "./routes/containerTypes";
-import { containersRouter } from "./routes/containers";
-import { accountingRouter } from "./routes/accounting";
-import { actionsRouter } from "./routes/actions";
-import { categoriesRouter } from "./routes/categories";
-import { publicRouter } from "./routes/public";
-import { backupRouter } from "./routes/backup";
-import { apiKeyAuth } from "./middleware/auth";
-import { errorHandler } from "./middleware/errorHandler";
+import { healthRouter } from "./routes/health.js";
+import { brewersRouter } from "./routes/brewers.js";
+import { beersRouter } from "./routes/beers.js";
+import { locationsRouter } from "./routes/locations.js";
+import { containerTypesRouter } from "./routes/containerTypes.js";
+import { containersRouter } from "./routes/containers.js";
+import { accountingRouter } from "./routes/accounting.js";
+import { actionsRouter } from "./routes/actions.js";
+import { categoriesRouter } from "./routes/categories.js";
+import { publicRouter } from "./routes/public.js";
+import { backupRouter } from "./routes/backup.js";
+import { apiKeyAuth } from "./middleware/auth.js";
+import { errorHandler } from "./middleware/errorHandler.js";
 
 export function createApp() {
   const app = express();

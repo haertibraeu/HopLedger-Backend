@@ -1,6 +1,6 @@
 import { createClient } from "webdav";
 import cron from "node-cron";
-import { buildSqliteBackup } from "./sqliteExport";
+import { buildSqliteBackup } from "./sqliteExport.js";
 
 function startWebDavBackupSchedule(): void {
   const webdavUrl = process.env.WEBDAV_URL;
