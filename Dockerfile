@@ -1,19 +1,4 @@
-# ── Stage 1: build ───────────────────────────────────────────────────────────
-FROM node:24-alpine AS builder
-
-WORKDIR /app
-
-COPY package*.json ./
-RUN npm ci
-
-COPY prisma ./prisma/
-COPY prisma.config.ts ./
-COPY tsconfig.json ./
-COPY src ./src/
-RUN npx prisma generate
-RUN npm run build
-
-# ── Stage 2: production image ─────────────────────────────────────────────────
+# ── Production image ──────────────────────────────────────────────────────────
 FROM node:24-alpine
 
 WORKDIR /app
@@ -23,10 +8,9 @@ RUN npm ci --omit=dev
 
 COPY prisma ./prisma/
 COPY prisma.config.ts ./
+COPY src ./src/
 RUN npx prisma generate
-
-COPY --from=builder /app/dist ./dist/
 
 EXPOSE 3000
 
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/index.js"]
+CMD ["sh", "-c", "npx prisma migrate deploy && npx tsx src/index.ts"]

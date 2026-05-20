@@ -39,6 +39,7 @@
     "node-cron": "^4.2.1",
     "pg": "^8.13.3",
     "prisma": "^7.0.0",
+    "tsx": "^4.21.0",
     "webdav": "^5.10.0"
   },
   "devDependencies": {
@@ -55,7 +56,6 @@
     "supertest": "^7.2.2",
     "ts-jest": "^29.4.9",
     "ts-node": "^10.9.2",
-    "tsx": "^4.21.0",
     "typescript": "^6.0.3"
   }
 }
